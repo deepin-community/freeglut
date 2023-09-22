@@ -12,10 +12,6 @@
  * Creation date: czw gru  2 11:58:41 CET 1999
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -307,6 +303,8 @@ int main( int argc, char** argv )
     glutInit( &argc, argv );
 
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+    glutMenuStatusFunc( SampleMenuStatus );
+    glutIdleFunc( SampleIdle );
 
     subMenuA = glutCreateMenu( SampleMenu );
     glutAddMenuEntry( "Sub menu A1 (01)", 1 );
@@ -333,9 +331,7 @@ int main( int argc, char** argv )
     glutReshapeFunc( SampleReshape );
     glutKeyboardFunc( SampleKeyboard );
     glutSpecialFunc( SampleSpecial );
-    glutIdleFunc( SampleIdle );
     glutEntryFunc( SampleEntry );
-    glutMenuStatusFunc( SampleMenuStatus );
     glutAttachMenu( GLUT_LEFT_BUTTON );
 
     glutInitWindowPosition( 200, 200 );
@@ -344,9 +340,7 @@ int main( int argc, char** argv )
     glutReshapeFunc( SampleReshape );
     glutKeyboardFunc( SampleKeyboard );
     glutSpecialFunc( SampleSpecial );
-    glutIdleFunc( SampleIdle );
     glutEntryFunc( SampleEntry );
-    glutMenuStatusFunc( SampleMenuStatus );
     glutAttachMenu( GLUT_LEFT_BUTTON );
     glutSetMenu(subMenuA);
     glutAttachMenu( GLUT_RIGHT_BUTTON );
@@ -379,9 +373,7 @@ int main( int argc, char** argv )
     glutDisplayFunc( SampleDisplay );
     glutReshapeFunc( SampleReshape );
     glutKeyboardFunc( SampleGameModeKeyboard );
-    glutIdleFunc( SampleIdle );
     glutEntryFunc( SampleEntry );
-    glutMenuStatusFunc( SampleMenuStatus );
     glutSetMenu(menuID);
     glutAttachMenu( GLUT_LEFT_BUTTON );
 
@@ -389,6 +381,12 @@ int main( int argc, char** argv )
         glutGet( GLUT_WINDOW_WIDTH ), glutGet( GLUT_WINDOW_HEIGHT ),
         glutGet( GLUT_WINDOW_X ), glutGet( GLUT_WINDOW_Y )
     );
+
+    /*
+     * Describe pixel format
+     */
+    printf("The current window has %i red bits, %i green bits, %i blue bits and %i alpha bits for a total buffer size of %i bits\n",glutGet(GLUT_WINDOW_RED_SIZE),glutGet(GLUT_WINDOW_GREEN_SIZE),glutGet(GLUT_WINDOW_BLUE_SIZE),glutGet(GLUT_WINDOW_ALPHA_SIZE),glutGet(GLUT_WINDOW_BUFFER_SIZE));
+    printf("It furthermore has %i depth bits and %i stencil bits\n",glutGet(GLUT_WINDOW_DEPTH_SIZE),glutGet(GLUT_WINDOW_STENCIL_SIZE));
 
     /*
      * Enter the main FreeGLUT processing loop

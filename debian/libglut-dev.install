@@ -1,0 +1,5 @@
+usr/include/GL/*
+usr/lib/*/libglut.a
+usr/lib/*/libglut.so
+usr/lib/*/cmake
+usr/lib/*/pkgconfig

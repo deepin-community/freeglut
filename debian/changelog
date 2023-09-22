@@ -1,3 +1,66 @@
+freeglut (3.4.0-1) unstable; urgency=medium
+
+  * Upload into unstable. 
+    Closes: #320375, #456516, #575025, #593599, #600961,
+            #640534, #853252, #956847, #984562, #85968
+
+ -- Anton Gladky <gladk@debian.org>  Sat, 05 Nov 2022 21:59:02 +0100
+
+freeglut (3.4.0-1~exp2) experimental; urgency=medium
+
+  * [17a8bc6] Reintroduce freeglut3-dev as a transitional package.
+
+ -- Anton Gladky <gladk@debian.org>  Fri, 04 Nov 2022 07:15:18 +0100
+
+freeglut (3.4.0-1~exp1) experimental; urgency=medium
+
+  * [e16c2bf] New upstream version 3.4.0
+  * [a74511c] Update install-files
+
+ -- Anton Gladky <gladk@debian.org>  Thu, 20 Oct 2022 19:24:06 +0200
+
+freeglut (3.2.2-1~exp2) experimental; urgency=medium
+
+  * [2863f42] Add Breaks+Replaces: freeglut3-dev. (Closes: #1021538)
+
+ -- Anton Gladky <gladk@debian.org>  Thu, 20 Oct 2022 18:52:17 +0200
+
+freeglut (3.2.2-1~exp1) experimental; urgency=medium
+
+  [ Helmut Grohne ]
+  * [062871b] rop unused Build-Depends: libxt-dev. (Closes: #981314)
+
+  [ Anton Gladky ]
+  * [7326975] Clean d/rules
+  * [d4560e8] Rename binaries
+  * [5dad387] Add provides-section
+  * [3149587] Update changelog.
+  * [025d6c2] Update gitlab-ci.
+  * [7ab9ecf] New upstream version 3.2.2
+  * [0e1cead] Update watch file format version to 4.
+  * [e98620f] Use secure URI in Homepage field.
+  * [b3ed672] Update standards version to 4.6.1, no changes needed.
+  * [dfe42f3] Update patches
+
+ -- Anton Gladky <gladk@debian.org>  Fri, 07 Oct 2022 22:49:35 +0200
+
+freeglut (3.2.1-1~exp2) experimental; urgency=medium
+
+  * [05a9410] New upstream version 3.2.1
+  * [ed1eb70] Remove old patches
+  * [efeb33c] Set Standards-version to 4.5.1
+  * [7d6f9eb] Fix compilation against gcc-10
+  * [8fa5fc7] Install all needed files
+  * [58292fd] Update gitlab-ci
+
+ -- Anton Gladky <gladk@debian.org>  Wed, 18 Aug 2021 22:46:05 +0200
+
+freeglut (3.2.1-1~exp2) experimental; urgency=medium
+
+  * [f51a5bd] Import upstream patch to prevent a crash
+
+ -- Anton Gladky <gladk@debian.org>  Wed, 22 Dec 2021 23:52:26 +0100
+
 freeglut (2.8.1-6) unstable; urgency=medium
 
   [ Steve Langasek ]

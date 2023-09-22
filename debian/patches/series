@@ -1,3 +1,1 @@
-03_fix_hurd.diff
-06_fix_FTBFS_kFreeBSD.patch
-07_HOME-fixed-buffer.patch
+20_update_soversion.cmake

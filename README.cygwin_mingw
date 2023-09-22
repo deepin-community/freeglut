@@ -13,8 +13,8 @@ Update 10/7/2009: generation of a library for linking without the DLL.
 
 Grabbing the sources
 
-    * Download the sources for version 2.8.1 which integrates recent changes.
-    * Using version 2.8.1 is better than the 2.4-stable branch because many
+    * Download the sources for version 2.6.0 which integrates recent changes.
+    * Using version 2.6 is better than the 2.4-stable branch because many
       bugs have been corrected.
     * You will find the sources on the site of Freeglut:
           o http://freeglut.sourceforge.net/
@@ -63,8 +63,8 @@ Compilation
 
     * Here Makefile which will make the deal:
 
-#Makefile for Freeglut 2.8.1 and Cygwin
-#To place in the directory 'src'
+#Makefile for Freeglut 2.6.0-rc and Cygwin
+#To place in the directory 'src/Common'
 
 sources=$ (wildcard *.c)
 objs=$ (sources: .c=.o)

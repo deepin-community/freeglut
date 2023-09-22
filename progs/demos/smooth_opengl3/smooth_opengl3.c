@@ -53,7 +53,7 @@ void checkError(const char *functionName)
 {
    GLenum error;
    while (( error = glGetError() ) != GL_NO_ERROR) {
-       fprintf (stderr, "GL error 0x%X detected in %s\n", error, functionName);
+      fprintf (stderr, "GL error 0x%X detected in %s\n", error, functionName);
    }
 }
 
@@ -97,6 +97,7 @@ typedef char ourGLchar;
 #ifndef APIENTRY
 #define APIENTRY
 #endif
+
 
 #ifndef GL_ARB_vertex_array_object
 typedef void (APIENTRY *PFNGLGENVERTEXARRAYSPROC) (GLsizei n, GLuint *arrays);
@@ -433,8 +434,12 @@ void keyboard(unsigned char key, int x, int y)
    }
 }
 
+void samplemenu(int menuID)
+{}
+
 int main(int argc, char** argv)
 {
+   int menuA;
    glutInit(&argc, argv);
    glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
    /* add command line argument "classic" for a pre-3.x context */
@@ -450,6 +455,15 @@ int main(int argc, char** argv)
    glutDisplayFunc(display); 
    glutReshapeFunc(reshape);
    glutKeyboardFunc (keyboard);
+
+   /* Add a menu. They have their own context and should thus work with forward compatible main windows too. */
+   menuA = glutCreateMenu(samplemenu);
+   glutAddMenuEntry("Sub menu A1 (01)",1);
+   glutAddMenuEntry("Sub menu A2 (02)",2);
+   glutAddMenuEntry("Sub menu A3 (03)",3);
+   glutSetMenu(menuA);
+   glutAttachMenu(GLUT_RIGHT_BUTTON);
+
    glutMainLoop();
    return 0;
 }
