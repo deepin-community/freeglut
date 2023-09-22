@@ -5,16 +5,18 @@
     in OpenGLUT.  It may also be useful to see which
     parameters control what behavior in the OpenGLUT
     objects.
- 
+
     Spinning wireframe and solid-shaded shapes are
     displayed.  Some parameters can be adjusted.
- 
+
    Keys:
       -    <tt>Esc &nbsp;</tt> Quit
       -    <tt>q Q &nbsp;</tt> Quit
       -    <tt>i I &nbsp;</tt> Show info
       -    <tt>p P &nbsp;</tt> Toggle perspective or orthographic projection
       -    <tt>r R &nbsp;</tt> Toggle fixed or animated rotation around model X-axis
+      -    <tt>s S &nbsp;</tt> Toggle toggle fixed function or shader render path
+      -    <tt>n N &nbsp;</tt> Toggle visualization of object's normal vectors
       -    <tt>= + &nbsp;</tt> Increase \a slices
       -    <tt>- _ &nbsp;</tt> Decreate \a slices
       -    <tt>, < &nbsp;</tt> Decreate \a stacks
@@ -32,7 +34,7 @@
 
     \author  Portions Copyright (C) 2004, the OpenGLUT project contributors. <br>
              OpenGLUT branched from freeglut in February, 2004.
- 
+
     \image   html openglut_shapes.png OpenGLUT Geometric Shapes Demonstration
     \include demos/shapes/shapes.c
 */
@@ -42,6 +44,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
+
+#include "glmatrix.h"
 
 #ifdef _MSC_VER
 /* DUMP MEMORY LEAKS */
@@ -56,6 +61,347 @@ void checkError(const char *functionName)
         fprintf (stderr, "GL error 0x%X detected in %s\n", error, functionName);
     }
 }
+
+/*
+ * OpenGL 2+ shader mode needs some function and macro definitions,
+ * avoiding a dependency on additional libraries like GLEW or the
+ * GL/glext.h header
+ */
+#ifndef GL_FRAGMENT_SHADER
+#define GL_FRAGMENT_SHADER 0x8B30
+#endif
+
+#ifndef GL_VERTEX_SHADER
+#define GL_VERTEX_SHADER 0x8B31
+#endif
+
+#ifndef GL_COMPILE_STATUS
+#define GL_COMPILE_STATUS 0x8B81
+#endif
+
+#ifndef GL_LINK_STATUS
+#define GL_LINK_STATUS 0x8B82
+#endif
+
+#ifndef GL_INFO_LOG_LENGTH
+#define GL_INFO_LOG_LENGTH 0x8B84
+#endif
+
+typedef ptrdiff_t ourGLsizeiptr;
+typedef char ourGLchar;
+
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+
+#ifndef GL_VERSION_2_0
+typedef GLuint (APIENTRY *PFNGLCREATESHADERPROC) (GLenum type);
+typedef void (APIENTRY *PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const ourGLchar **string, const GLint *length);
+typedef void (APIENTRY *PFNGLCOMPILESHADERPROC) (GLuint shader);
+typedef GLuint (APIENTRY *PFNGLCREATEPROGRAMPROC) (void);
+typedef void (APIENTRY *PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
+typedef void (APIENTRY *PFNGLLINKPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY *PFNGLUSEPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY *PFNGLGETSHADERIVPROC) (GLuint shader, GLenum pname, GLint *params);
+typedef void (APIENTRY *PFNGLGETSHADERINFOLOGPROC) (GLuint shader, GLsizei bufSize, GLsizei *length, ourGLchar *infoLog);
+typedef void (APIENTRY *PFNGLGETPROGRAMIVPROC) (GLenum target, GLenum pname, GLint *params);
+typedef void (APIENTRY *PFNGLGETPROGRAMINFOLOGPROC) (GLuint program, GLsizei bufSize, GLsizei *length, ourGLchar *infoLog);
+typedef GLint (APIENTRY *PFNGLGETATTRIBLOCATIONPROC) (GLuint program, const ourGLchar *name);
+typedef GLint (APIENTRY *PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const ourGLchar *name);
+typedef void (APIENTRY *PFNGLUNIFORMMATRIX4FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY *PFNGLUNIFORMMATRIX3FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+#endif
+
+PFNGLCREATESHADERPROC gl_CreateShader;
+PFNGLSHADERSOURCEPROC gl_ShaderSource;
+PFNGLCOMPILESHADERPROC gl_CompileShader;
+PFNGLCREATEPROGRAMPROC gl_CreateProgram;
+PFNGLATTACHSHADERPROC gl_AttachShader;
+PFNGLLINKPROGRAMPROC gl_LinkProgram;
+PFNGLUSEPROGRAMPROC gl_UseProgram;
+PFNGLGETSHADERIVPROC gl_GetShaderiv;
+PFNGLGETSHADERINFOLOGPROC gl_GetShaderInfoLog;
+PFNGLGETPROGRAMIVPROC gl_GetProgramiv;
+PFNGLGETPROGRAMINFOLOGPROC gl_GetProgramInfoLog;
+PFNGLGETATTRIBLOCATIONPROC gl_GetAttribLocation;
+PFNGLGETUNIFORMLOCATIONPROC gl_GetUniformLocation;
+PFNGLUNIFORMMATRIX4FVPROC gl_UniformMatrix4fv;
+PFNGLUNIFORMMATRIX3FVPROC gl_UniformMatrix3fv;
+
+void initExtensionEntries(void)
+{
+    gl_CreateShader = (PFNGLCREATESHADERPROC) glutGetProcAddress ("glCreateShader");
+    gl_ShaderSource = (PFNGLSHADERSOURCEPROC) glutGetProcAddress ("glShaderSource");
+    gl_CompileShader = (PFNGLCOMPILESHADERPROC) glutGetProcAddress ("glCompileShader");
+    gl_CreateProgram = (PFNGLCREATEPROGRAMPROC) glutGetProcAddress ("glCreateProgram");
+    gl_AttachShader = (PFNGLATTACHSHADERPROC) glutGetProcAddress ("glAttachShader");
+    gl_LinkProgram = (PFNGLLINKPROGRAMPROC) glutGetProcAddress ("glLinkProgram");
+    gl_UseProgram = (PFNGLUSEPROGRAMPROC) glutGetProcAddress ("glUseProgram");
+    gl_GetShaderiv = (PFNGLGETSHADERIVPROC) glutGetProcAddress ("glGetShaderiv");
+    gl_GetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC) glutGetProcAddress ("glGetShaderInfoLog");
+    gl_GetProgramiv = (PFNGLGETPROGRAMIVPROC) glutGetProcAddress ("glGetProgramiv");
+    gl_GetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC) glutGetProcAddress ("glGetProgramInfoLog");
+    gl_GetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC) glutGetProcAddress ("glGetAttribLocation");
+    gl_GetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC) glutGetProcAddress ("glGetUniformLocation");
+    gl_UniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC) glutGetProcAddress ("glUniformMatrix4fv");
+    gl_UniformMatrix3fv = (PFNGLUNIFORMMATRIX3FVPROC) glutGetProcAddress ("glUniformMatrix3fv");
+    if (!gl_CreateShader || !gl_ShaderSource || !gl_CompileShader || !gl_CreateProgram || !gl_AttachShader || !gl_LinkProgram || !gl_UseProgram || !gl_GetShaderiv || !gl_GetShaderInfoLog || !gl_GetProgramiv || !gl_GetProgramInfoLog || !gl_GetAttribLocation || !gl_GetUniformLocation || !gl_UniformMatrix4fv || !gl_UniformMatrix3fv)
+    {
+        fprintf (stderr, "glCreateShader, glShaderSource, glCompileShader, glCreateProgram, glAttachShader, glLinkProgram, glUseProgram, glGetShaderiv, glGetShaderInfoLog, glGetProgramiv, glGetProgramInfoLog, glGetAttribLocation, glGetUniformLocation, glUniformMatrix4fv or gl_UniformMatrix3fv not found");
+        exit(1);
+    }
+}
+
+const ourGLchar *vertexShaderSource[] = {
+    "/**",
+    " * From the OpenGL Programming wikibook: http://en.wikibooks.org/wiki/GLSL_Programming/GLUT/Smooth_Specular_Highlights",
+    " * This file is in the public domain.",
+    " * Contributors: Sylvain Beucler",
+    " */",
+    "attribute vec3 fg_coord;",
+    "attribute vec3 fg_normal;",
+    "varying vec4 position;  /* position of the vertex (and fragment) in world space */",
+    "varying vec3 varyingNormalDirection;  /* surface normal vector in world space */",
+    "uniform mat4 m, p;      /* don't need v, as always identity in our demo */",
+    "uniform mat3 m_3x3_inv_transp;",
+    " ",
+    "void main()",
+    "{",
+    "  vec4 fg_coord4 = vec4(fg_coord, 1.0);",
+    "  position = m * fg_coord4;",
+    "  varyingNormalDirection = normalize(m_3x3_inv_transp * fg_normal);",
+    " ",
+    "  mat4 mvp = p*m;   /* normally p*v*m */",
+    "  gl_Position = mvp * fg_coord4;",
+    "}"
+};
+
+const ourGLchar *fragmentShaderSource[] = {
+    "/**",
+    " * From the OpenGL Programming wikibook: http://en.wikibooks.org/wiki/GLSL_Programming/GLUT/Smooth_Specular_Highlights",
+    " * This file is in the public domain.",
+    " * Contributors: Martin Kraus, Sylvain Beucler",
+    " */",
+    "varying vec4 position;  /* position of the vertex (and fragment) in world space */",
+    "varying vec3 varyingNormalDirection;  /* surface normal vector in world space */",
+    "/* uniform mat4 v_inv;   // in this demo, the view matrix is always an identity matrix */",
+    " ",
+    "struct lightSource",
+    "{",
+    "  vec4 position;",
+    "  vec4 diffuse;",
+    "  vec4 specular;",
+    "  float constantAttenuation, linearAttenuation, quadraticAttenuation;",
+    "  float spotCutoff, spotExponent;",
+    "  vec3 spotDirection;",
+    "};",
+    "lightSource light0 = lightSource(",
+    "  vec4(2.0, 5.0, 5.0, 0.0),",
+    "  vec4(1.0, 1.0, 1.0, 1.0),",
+    "  vec4(1.0, 1.0, 1.0, 1.0),",
+    "    0.0, 1.0, 0.0,",
+    "  180.0, 0.0,",
+    "  vec3(0.0, 0.0, 0.0)",
+    ");",
+    "vec4 scene_ambient = vec4(0.2, 0.2, 0.2, 1.0);",
+    " ",
+    "struct material",
+    "{",
+    "  vec4 ambient;",
+    "  vec4 diffuse;",
+    "  vec4 specular;",
+    "  float shininess;",
+    "};",
+    "material frontMaterial = material(",
+    "  vec4(1.0, 0.0, 0.0, 1.0),",
+    "  vec4(1.0, 0.0, 0.0, 1.0),",
+    "  vec4(1.0, 1.0, 1.0, 1.0),",
+    "  100.0",
+    ");",
+    " ",
+    "void main()",
+    "{",
+    "  vec3 normalDirection = normalize(varyingNormalDirection);",
+    "  /* vec3 viewDirection = normalize(vec3(v_inv * vec4(0.0, 0.0, 0.0, 1.0) - position)); */",
+    "  vec3 viewDirection = normalize(vec3(vec4(0.0, 0.0, 0.0, 1.0) - position));    /* in this demo, the view matrix is always an identity matrix */",
+    "  vec3 lightDirection;",
+    "  float attenuation;",
+    " ",
+    "  if (0.0 == light0.position.w) /* directional light? */",
+    "    {",
+    "      attenuation = 1.0; /* no attenuation */",
+    "      lightDirection = normalize(vec3(light0.position));",
+    "    } ",
+    "  else /* point light or spotlight (or other kind of light) */",
+    "    {",
+    "      vec3 positionToLightSource = vec3(light0.position - position);",
+    "      float distance = length(positionToLightSource);",
+    "      lightDirection = normalize(positionToLightSource);",
+    "      attenuation = 1.0 / (light0.constantAttenuation",
+    "                           + light0.linearAttenuation * distance",
+    "                           + light0.quadraticAttenuation * distance * distance);",
+    " ",
+    "      if (light0.spotCutoff <= 90.0) /* spotlight? */",
+    "        {",
+    "          float clampedCosine = max(0.0, dot(-lightDirection, light0.spotDirection));",
+    "          if (clampedCosine < cos(radians(light0.spotCutoff))) /* outside of spotlight cone? */",
+    "            {",
+    "              attenuation = 0.0;",
+    "            }",
+    "          else",
+    "            {",
+    "              attenuation = attenuation * pow(clampedCosine, light0.spotExponent);   ",
+    "            }",
+    "        }",
+    "    }",
+    " ",
+    "  vec3 ambientLighting = vec3(scene_ambient) * vec3(frontMaterial.ambient);",
+    " ",
+    "  vec3 diffuseReflection = attenuation ",
+    "    * vec3(light0.diffuse) * vec3(frontMaterial.diffuse)",
+    "    * max(0.0, dot(normalDirection, lightDirection));",
+    " ",
+    "  vec3 specularReflection;",
+    "  if (dot(normalDirection, lightDirection) < 0.0) /* light source on the wrong side? */",
+    "    {",
+    "      specularReflection = vec3(0.0, 0.0, 0.0); /* no specular reflection */",
+    "    }",
+    "  else /* light source on the right side */",
+    "    {",
+    "      specularReflection = attenuation * vec3(light0.specular) * vec3(frontMaterial.specular) ",
+    "        * pow(max(0.0, dot(reflect(-lightDirection, normalDirection), viewDirection)), frontMaterial.shininess);",
+    "    }",
+    " ",
+    "  gl_FragColor = vec4(ambientLighting + diffuseReflection + specularReflection, 1.0);",
+    "}"
+};
+
+GLint getAttribOrUniformLocation(const char* name, GLuint program, GLboolean isAttrib)
+{
+    if (isAttrib)
+    {
+        GLint attrib = gl_GetAttribLocation(program, name);
+        if (attrib == -1)
+        {
+            fprintf(stderr, "Warning: Could not bind attrib %s\n", name);
+        }
+
+        checkError ("getAttribOrUniformLocation");
+        return attrib;
+    }
+    else
+    {
+        GLint uniform = gl_GetUniformLocation(program, name);
+        if (uniform == -1)
+        {
+            fprintf(stderr, "Warning: Could not bind uniform %s\n", name);
+        }
+
+        checkError ("getAttribOrUniformLocation");
+        return uniform;
+    }
+}
+
+GLuint program;
+GLint attribute_fg_coord = -1, attribute_fg_normal = -1;
+GLint uniform_m = -1, uniform_p = -1, uniform_m_3x3_inv_transp = -1;
+GLint shaderReady = 0;  /* Set to 1 when all initialization went well, to -1 when shader somehow unusable. */
+
+
+
+void compileAndCheck(GLuint shader)
+{
+    GLint status;
+    gl_CompileShader (shader);
+    gl_GetShaderiv (shader, GL_COMPILE_STATUS, &status);
+    if (status == GL_FALSE) {
+        GLint infoLogLength;
+        ourGLchar *infoLog;
+        gl_GetShaderiv (shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+        infoLog = (ourGLchar*) malloc (infoLogLength);
+        gl_GetShaderInfoLog (shader, infoLogLength, NULL, infoLog);
+        fprintf (stderr, "compile log: %s\n", infoLog);
+        free (infoLog);
+    }
+    checkError ("compileAndCheck");
+}
+
+GLuint compileShaderSource(GLenum type, GLsizei count, const ourGLchar **string)
+{
+    GLuint shader = gl_CreateShader (type);
+    gl_ShaderSource (shader, count, string, NULL);
+
+    checkError ("compileShaderSource");
+
+    compileAndCheck (shader);
+    return shader;
+}
+
+void linkAndCheck(GLuint program)
+{
+    GLint status;
+    gl_LinkProgram (program);
+    gl_GetProgramiv (program, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE) {
+        GLint infoLogLength;
+        ourGLchar *infoLog;
+        gl_GetProgramiv (program, GL_INFO_LOG_LENGTH, &infoLogLength);
+        infoLog = (ourGLchar*) malloc (infoLogLength);
+        gl_GetProgramInfoLog (program, infoLogLength, NULL, infoLog);
+        fprintf (stderr, "link log: %s\n", infoLog);
+        free (infoLog);
+    }
+    checkError ("linkAndCheck");
+}
+
+void createProgram(GLuint vertexShader, GLuint fragmentShader)
+{
+    program = gl_CreateProgram ();
+    if (vertexShader != 0) {
+        gl_AttachShader (program, vertexShader);
+    }
+    if (fragmentShader != 0) {
+        gl_AttachShader (program, fragmentShader);
+    }
+
+    checkError ("createProgram");
+
+    linkAndCheck (program);
+}
+
+void initShader(void)
+{
+    const GLsizei vertexShaderLines = sizeof(vertexShaderSource) / sizeof(ourGLchar*);
+    GLuint vertexShader =
+        compileShaderSource (GL_VERTEX_SHADER, vertexShaderLines, vertexShaderSource);
+
+    const GLsizei fragmentShaderLines = sizeof(fragmentShaderSource) / sizeof(ourGLchar*);
+    GLuint fragmentShader =
+        compileShaderSource (GL_FRAGMENT_SHADER, fragmentShaderLines, fragmentShaderSource);
+
+    checkError ("initShader - 1");
+
+    createProgram (vertexShader, fragmentShader);
+
+    gl_UseProgram (program);
+
+    attribute_fg_coord      = getAttribOrUniformLocation("fg_coord"         , program, GL_TRUE);
+    attribute_fg_normal     = getAttribOrUniformLocation("fg_normal"        , program, GL_TRUE);
+    uniform_m               = getAttribOrUniformLocation("m"                , program, GL_FALSE);
+    uniform_p               = getAttribOrUniformLocation("p"                , program, GL_FALSE);
+    uniform_m_3x3_inv_transp= getAttribOrUniformLocation("m_3x3_inv_transp" , program, GL_FALSE);
+
+    gl_UseProgram (0);
+
+    if (attribute_fg_coord==-1 || attribute_fg_normal==-1 ||
+        uniform_m==-1 || uniform_p==-1 || uniform_m_3x3_inv_transp==-1)
+        shaderReady = -1;
+    else
+        shaderReady = 1;
+
+    checkError ("initShader - 2");
+}
+
 /*
  * This macro is only intended to be used on arrays, of course.
  */
@@ -77,6 +423,9 @@ static GLboolean show_info = GL_TRUE;
 static float ar;
 static GLboolean persProject = GL_TRUE;
 static GLboolean animateXRot = GL_FALSE;
+static GLboolean useShader   = GL_FALSE;
+static GLboolean visNormals  = GL_FALSE;
+static GLboolean flat;
 
 /*
  * Enum to tell drawSizeInfo what to draw for each object
@@ -116,24 +465,22 @@ static void drawSolidCone(void)                { glutSolidCone(irad,orad,slices,
 static void drawWireCone(void)                 { glutWireCone(irad,orad,slices,stacks);          }  /* irad doubles as base input, and orad as height input */
 static void drawSolidCylinder(void)            { glutSolidCylinder(irad,orad,slices,stacks);     }  /* irad doubles as radius input, and orad as height input */
 static void drawWireCylinder(void)             { glutWireCylinder(irad,orad,slices,stacks);      }  /* irad doubles as radius input, and orad as height input */
+/* per Glut manpage, it should be noted that the teapot is rendered
+ * with clockwise winding for front facing polygons...
+ * Same for the teacup and teaspoon
+ */
 static void drawSolidTeapot(void)
-{
-    /* per Glut manpage, it should be noted that the teapot is rendered
-     * with clockwise winding for front facing polygons...
-     */
-    glFrontFace(GL_CW);
-    glutSolidTeapot(orad);  /* orad doubles as size input */
-    glFrontFace(GL_CCW);
-}
+{   glFrontFace(GL_CW);    glutSolidTeapot(orad);   glFrontFace(GL_CCW);    /* orad doubles as size input */}
 static void drawWireTeapot(void)
-{
-    /* per Glut manpage, it should be noted that the teapot is rendered
-     * with clockwise winding for front facing polygons...
-     */
-    glFrontFace(GL_CW);
-    glutWireTeapot(orad);  /* orad doubles as size input */
-    glFrontFace(GL_CCW);
-}
+{   glFrontFace(GL_CW);    glutWireTeapot(orad);    glFrontFace(GL_CCW);    /* orad doubles as size input */}
+static void drawSolidTeacup(void)
+{   glFrontFace(GL_CW);    glutSolidTeacup(orad);   glFrontFace(GL_CCW);    /* orad doubles as size input */}
+static void drawWireTeacup(void)
+{   glFrontFace(GL_CW);    glutWireTeacup(orad);    glFrontFace(GL_CCW);    /* orad doubles as size input */}
+static void drawSolidTeaspoon(void)
+{   glFrontFace(GL_CW);    glutSolidTeaspoon(orad); glFrontFace(GL_CCW);    /* orad doubles as size input */}
+static void drawWireTeaspoon(void)
+{   glFrontFace(GL_CW);    glutWireTeaspoon(orad);  glFrontFace(GL_CCW);    /* orad doubles as size input */}
 
 #define RADIUSFAC    0.70710678118654752440084436210485f
 
@@ -208,6 +555,8 @@ static const entry table [] =
     ENTRY (Icosahedron,GEO_NO_SIZE),
     ENTRY (SierpinskiSponge,GEO_SCALE),
     ENTRY (Teapot,GEO_SIZE),
+    ENTRY (Teacup,GEO_SIZE),
+    ENTRY (Teaspoon,GEO_SIZE),
     ENTRY (Torus,GEO_INNER_OUTER_RAD),
     ENTRY (Sphere,GEO_RAD),
     ENTRY (Cone,GEO_BASE_HEIGHT),
@@ -305,10 +654,20 @@ static void drawInfo()
         shapesPrintf (row++, 1, "Perspective projection (p)");
     else
         shapesPrintf (row++, 1, "Orthographic projection (p)");
+    if (useShader) {
+        shapesPrintf (row++, 1, "Using shader (s)");
+    } else {
+        shapesPrintf (row++, 1, "Using fixed function pipeline (s)");
+        if (flat)
+            shapesPrintf (row++, 1, "Flat shading (f)");
+        else
+            shapesPrintf (row++, 1, "Smooth shading (f)");
+    }
     if (animateXRot)
         shapesPrintf (row++, 1, "2D rotation (r)");
     else
         shapesPrintf (row++, 1, "1D rotation (r)");
+    shapesPrintf (row++, 1, "visualizing normals: %i (n)",visNormals);
 }
 
 /* GLUT callback Handlers */
@@ -328,35 +687,91 @@ static void display(void)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    if (persProject)
-        glFrustum(-ar, ar, -1.0, 1.0, 2.0, 100.0);
+    glutSetOption(GLUT_GEOMETRY_VISUALIZE_NORMALS,visNormals);  /* Normals visualized or not? */
+
+    glShadeModel(flat ? GL_FLAT : GL_SMOOTH);  /* flat or gouraud shading */
+
+    if (useShader && !shaderReady)
+        initShader();
+
+    if (useShader && shaderReady)
+    {
+        /* setup use of shader (and vertex buffer by FreeGLUT) */
+        gl_UseProgram (program);
+        glutSetVertexAttribCoord3(attribute_fg_coord);
+        glutSetVertexAttribNormal(attribute_fg_normal);
+        /* There is also a glutSetVertexAttribTexCoord2, which is used only when drawing the teapot, teacup or teaspoon */
+
+        gl_matrix_mode(GL_PROJECTION);
+        gl_load_identity();
+        if (persProject)
+            gl_frustum(-ar, ar, -1.f, 1.f, 2.f, 100.f);
+        else
+            gl_ortho(-ar*3, ar*3, -3.f, 3.f, 2.f, 100.f);
+        gl_UniformMatrix4fv (uniform_p, 1, GL_FALSE, get_matrix(GL_PROJECTION));
+
+
+        gl_matrix_mode(GL_MODELVIEW);
+        gl_load_identity();
+
+        gl_push_matrix();
+            /* Not in reverse order like normal OpenGL, our util library multiplies the matrices in the order they are specified in */
+            gl_rotatef((float)a,0,0,1);
+            gl_rotatef((float)b,1,0,0);
+            gl_translatef(0,1.2f,-6);
+            gl_UniformMatrix4fv (uniform_m               , 1, GL_FALSE, get_matrix(GL_MODELVIEW));
+            gl_UniformMatrix3fv (uniform_m_3x3_inv_transp, 1, GL_FALSE, get_inv_transpose_3x3(GL_MODELVIEW));
+            table [function_index].solid ();
+        gl_pop_matrix();
+
+        gl_push_matrix();
+            gl_rotatef((float)a,0,0,1);
+            gl_rotatef((float)b,1,0,0);
+            gl_translatef(0,-1.2f,-6);
+            gl_UniformMatrix4fv (uniform_m               , 1, GL_FALSE, get_matrix(GL_MODELVIEW));
+            gl_UniformMatrix3fv (uniform_m_3x3_inv_transp, 1, GL_FALSE, get_inv_transpose_3x3(GL_MODELVIEW));
+            table [function_index].wire ();
+        gl_pop_matrix();
+
+        gl_UseProgram (0);
+        glutSetVertexAttribCoord3(-1);
+        glutSetVertexAttribNormal(-1);
+
+        checkError ("display");
+    }
     else
-        glOrtho(-ar*3, ar*3, -3.0, 3.0, 2.0, 100.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    {
+        /* fixed function pipeline */
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        if (persProject)
+            glFrustum(-ar, ar, -1.0, 1.0, 2.0, 100.0);
+        else
+            glOrtho(-ar*3, ar*3, -3.0, 3.0, 2.0, 100.0);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
-    glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHTING);
 
-    glColor3d(1,0,0);
+        glColor3d(1,0,0);
 
-    glPushMatrix();
-        glTranslated(0,1.2,-6);
-        glRotated(b,1,0,0);
-        glRotated(a,0,0,1);
-        table [function_index].solid ();
-    glPopMatrix();
+        glPushMatrix();
+            glTranslated(0,1.2,-6);
+            glRotated(b,1,0,0);
+            glRotated(a,0,0,1);
+            table [function_index].solid ();
+        glPopMatrix();
 
-    glPushMatrix();
-        glTranslated(0,-1.2,-6);
-        glRotated(b,1,0,0);
-        glRotated(a,0,0,1);
-        table [function_index].wire ();
-    glPopMatrix();
+        glPushMatrix();
+            glTranslated(0,-1.2,-6);
+            glRotated(b,1,0,0);
+            glRotated(a,0,0,1);
+            table [function_index].wire ();
+        glPopMatrix();
 
-    glDisable(GL_LIGHTING);
-    glColor3d(0.1,0.1,0.4);
+        glDisable(GL_LIGHTING);
+        glColor3d(0.1,0.1,0.4);
+    }
 
     if( show_info )
         /* print info to screen */
@@ -393,10 +808,10 @@ key(unsigned char key, int x, int y)
     case '.':
     case '>': stacks++;                   break;
 
-    case '9': 
+    case '9':
     case '(': if( depth > -1 ) depth--;   break;
 
-    case '0': 
+    case '0':
     case ')': ++depth;                    break;
 
     case 'P':
@@ -404,6 +819,22 @@ key(unsigned char key, int x, int y)
 
     case 'R':
     case 'r': animateXRot=!animateXRot;   break;
+
+    case 'S':
+    case 's':
+        useShader=!useShader;
+        /* Cuboctahedron can't be shown when in shader mode, move to next */
+        if (useShader && NUMBEROF (table)-1 == ( unsigned )function_index)
+                function_index = 0;
+        break;
+
+    case 'F':
+    case 'f':
+        flat ^= 1;
+        break;
+
+    case 'N':
+    case 'n': visNormals=!visNormals;     break;
 
     default:
         break;
@@ -433,6 +864,15 @@ static void special (int key, int x, int y)
 
     if (NUMBEROF (table) <= ( unsigned )function_index)
         function_index = 0;
+
+    /* Cuboctahedron can't be shown when in shader mode, skip it */
+    if (useShader && NUMBEROF (table)-1 == ( unsigned )function_index)
+    {
+        if (key==GLUT_KEY_PAGE_UP)
+            function_index = 0;
+        else
+            function_index -= 1;
+    }
 }
 
 
@@ -492,6 +932,8 @@ main(int argc, char *argv[])
     glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
     glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+
+    initExtensionEntries();
 
     glutMainLoop();
 

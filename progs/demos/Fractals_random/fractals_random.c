@@ -26,7 +26,6 @@
 #include <string.h>
 #include <math.h>
 #define FGH_PI       3.14159265358979323846
-
 #ifdef _MSC_VER
 /* DUMP MEMORY LEAKS */
 #include <crtdbg.h>
@@ -321,7 +320,7 @@ void readConfigFile ( char *fnme )
 
     affine[1].a00 = 1/6. ;  affine[1].a01 = -1/3.*sin(FGH_PI/3.) ;   affine[1].a10 = 1/3.*sin(FGH_PI/3.) ;   affine[1].a11 = 1/6. ;
     affine[1].b0 = 1/3. ;   affine[1].b1 = 0.0 ;
-    
+
     affine[2].a00 = 1/6. ;  affine[2].a01 = -1/3.*sin(-FGH_PI/3.) ;  affine[2].a10 = 1/3.*sin(-FGH_PI/3.) ;  affine[2].a11 = 1/6. ;
     affine[2].b0 = 0.5 ;    affine[2].b1 = sqrt(3)/6. ;
 
@@ -356,8 +355,6 @@ void readConfigFile ( char *fnme )
 int 
 main(int argc, char *argv[])
 {
-  int fractal_window ;
-
   glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE );
 
   glutInitWindowSize(500, 250);
@@ -369,7 +366,7 @@ main(int argc, char *argv[])
   else
     readConfigFile ( "fractals.dat" ) ;
 
-  fractal_window = glutCreateWindow( window_title );
+  glutCreateWindow( window_title );
 
   glClearColor(1.0, 1.0, 1.0, 1.0);
 

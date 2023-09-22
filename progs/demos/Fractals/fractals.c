@@ -273,7 +273,7 @@ void readConfigFile ( char *fnme )
     affine = (AffineTrans *)malloc ( num_trans * sizeof(AffineTrans) ) ;
     affine[0].a00 = 1/3. ;  affine[0].a01 = 0.00 ;  affine[0].a10 = 0.00 ;  affine[0].a11 = 1/3. ;
     affine[0].b0 = 0.0 ;    affine[0].b1 = 0.0 ;
-    
+
     affine[1].a00 = 1/6. ;  affine[1].a01 = -1/3.*sin(FGH_PI/3.) ;   affine[1].a10 = 1/3.*sin(FGH_PI/3.) ;   affine[1].a11 = 1/6. ;
     affine[1].b0 = 1/3. ;   affine[1].b1 = 0.0 ;
 
@@ -311,8 +311,6 @@ void readConfigFile ( char *fnme )
 int 
 main(int argc, char *argv[])
 {
-  int fractal_window ;
-
   glutInitWindowSize(500, 250);
   glutInitWindowPosition ( 140, 140 );
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE );
@@ -323,7 +321,7 @@ main(int argc, char *argv[])
   else
     readConfigFile ( "fractals.dat" ) ;
 
-  fractal_window = glutCreateWindow( window_title );
+  glutCreateWindow( window_title );
 
   glClearColor(1.0, 1.0, 1.0, 1.0);
 
