@@ -1,2 +1,3 @@
 version=4
-https://sf.net/freeglut freeglut-([\d.]+)\.tar\.gz
+opts="searchmode=plain" \
+https://sf.net/freeglut/ freeglut@ANY_VERSION@\.tar\.gz

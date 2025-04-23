@@ -1,3 +1,33 @@
+freeglut (3.4.0-4) unstable; urgency=medium
+
+  * [376dbf8] Add Breaks/Replace for freeglut3. (Closes: #1090903)
+
+ -- Anton Gladky <gladk@debian.org>  Fri, 20 Dec 2024 21:45:03 +0100
+
+freeglut (3.4.0-3) unstable; urgency=medium
+
+  * [b4a5753] Update so version
+
+ -- Anton Gladky <gladk@debian.org>  Wed, 18 Dec 2024 06:28:45 +0100
+
+freeglut (3.4.0-2) unstable; urgency=medium
+
+  [ Jochen Sprickerhof ]
+  * [53cdad7] Switch to libgl-dev package (Closes: #998336)
+  * [ef1f4fc] Fix some lintian warnings.
+
+  [ Anton Gladky ]
+  * [7c785ad] Update description.
+  * [94902b4] Do not expand so-version. (Closes: #1085576)
+  * [b54ad98] d/control: set Standards-Version to 4.7.0
+  * [ad859cb] Update install files.
+  * [5ea74d8] Remove deps on libglu1-mesa-dev. (Closes: #998336)
+
+  [ Patrice Duroux ]
+  * [be4cba7] Update d/watch. (Closes: #1081710)
+
+ -- Anton Gladky <gladk@debian.org>  Tue, 17 Dec 2024 18:28:32 +0100
+
 freeglut (3.4.0-1) unstable; urgency=medium
 
   * Upload into unstable. 

@@ -4,7 +4,6 @@ Section: graphics
 Priority: optional
 Build-Depends: cmake,
                debhelper-compat (= 13),
-               libgl1-mesa-dev,
                libglu1-mesa-dev,
                libtool,
                libusbhid-dev [kfreebsd-any],
@@ -12,7 +11,7 @@ Build-Depends: cmake,
                libxext-dev,
                libxi-dev,
                libxxf86vm-dev [amd64 i386]
-Standards-Version: 4.6.1
+Standards-Version: 4.7.0
 Vcs-Browser: https://salsa.debian.org/debian/freeglut
 Vcs-Git: https://salsa.debian.org/debian/freeglut.git
 Homepage: https://freeglut.sourceforge.net/
@@ -24,6 +23,8 @@ Section: libs
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
+Breaks: freeglut3 (<< 2.8.1-7)
+Replaces: freeglut3 (<< 2.8.1-7)
 Description: OpenGL Utility Toolkit
  GLUT is a window system independent toolkit for writing OpenGL programs,
  implementing a simple windowing API, which makes learning about and
@@ -37,23 +38,24 @@ Description: OpenGL Utility Toolkit
 Package: freeglut3-dev
 Architecture: any
 Multi-Arch: same
-Section: libdevel
+Section: oldlibs
 Depends: libglut-dev (= ${binary:Version}),
-Description: Tranisitonal package
+         ${misc:Depends}
+Description: transitional package
+ This is a transitional package. It can safely be removed.
 
 Package: libglut-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Breaks: freeglut3-dev (<< 3.2.2)
-Replaces: freeglut3-dev (<< 3.2.2)
 Depends: libglut3.12 (= ${binary:Version}),
-         libgl1-mesa-dev,
          libglu1-mesa-dev,
          libxext-dev,
          libxt-dev,
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
+Breaks: freeglut3-dev (<< 3.2.2)
+Replaces: freeglut3-dev (<< 3.2.2)
 Description: OpenGL Utility Toolkit development files
  GLUT is a window system independent toolkit for writing OpenGL programs.
  It implements a simple windowing API, which makes learning about and
